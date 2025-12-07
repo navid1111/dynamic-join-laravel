@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 class ReportController extends Controller
 {
     private ReportQueryBuilder $reportQueryBuilder;
+
     private ReportFilterService $reportFilterService;
 
     public function __construct(ReportQueryBuilder $reportQueryBuilder, ReportFilterService $reportFilterService)
@@ -23,7 +24,7 @@ class ReportController extends Controller
     public function showData($id, $startDate = null, $endDate = null)
     {
         $report = Report::find($id);
-        if (!$report) {
+        if (! $report) {
             return redirect('/view-report-list')->with('error', 'Report not found!');
         }
 
@@ -35,29 +36,29 @@ class ReportController extends Controller
 
         $data = $report->report_details;
         $name = $report->name;
-        
+
         // Get old inline filters (if any)
         $oldFilters = $report->getFilterDefinitions();
-        
+
         // Get new FilterDefinition filters assigned to this report
         $newFilters = $report->filterDefinitions()->get();
 
         $result = $this->reportQueryBuilder->build($data).' ';
-        
+
         // Add date range filter only if dateTable exists
         if (isset($data['dateTable'])) {
             $result .= 'where date('.$data['dateTable'].".created_at) between '".$startDate."' and '".$endDate."'";
-        } elseif (!empty($data['tables'])) {
+        } elseif (! empty($data['tables'])) {
             $result .= 'where date('.key($data['tables'][0]).".created_at) between '".$startDate."' and '".$endDate."'";
         }
 
         // Apply old inline filters if provided
         $filterValues = request()->query();
         $bindings = [];
-        if (!empty($oldFilters) && !empty($filterValues)) {
+        if (! empty($oldFilters) && ! empty($filterValues)) {
             // Transform number_range single values to min/max format
             foreach ($oldFilters as $filter) {
-                if ($filter['type'] === 'number_range' && isset($filterValues[$filter['id']]) && !is_array($filterValues[$filter['id']])) {
+                if ($filter['type'] === 'number_range' && isset($filterValues[$filter['id']]) && ! is_array($filterValues[$filter['id']])) {
                     $filterValues[$filter['id']] = ['min' => $filterValues[$filter['id']], 'max' => null];
                 }
             }
@@ -68,16 +69,16 @@ class ReportController extends Controller
         }
 
         // Apply new FilterDefinition filters
-        if (!empty($newFilters)) {
+        if (! empty($newFilters)) {
             foreach ($newFilters as $filter) {
-                $filterValue = request()->query('filter_' . $filter->id);
-                
+                $filterValue = request()->query('filter_'.$filter->id);
+
                 if (empty($filterValue)) {
                     continue;
                 }
 
                 // Determine the column to filter on
-                $filterColumn = $filter->target_table . '.' . $filter->target_column;
+                $filterColumn = $filter->target_table.'.'.$filter->target_column;
 
                 // Add filter condition based on filter type
                 if ($filter->type === 'dropdown' || $filter->type === 'text') {
@@ -95,10 +96,10 @@ class ReportController extends Controller
                     $bindings[] = $filterValue;
                 } elseif ($filter->type === 'checkbox' || $filter->type === 'multi_select') {
                     // Multiple value filter
-                    if (!is_array($filterValue)) {
+                    if (! is_array($filterValue)) {
                         $filterValue = [$filterValue];
                     }
-                    if (!empty($filterValue)) {
+                    if (! empty($filterValue)) {
                         $placeholders = implode(',', array_fill(0, count($filterValue), '?'));
                         $result .= " AND {$filterColumn} IN ({$placeholders})";
                         $bindings = array_merge($bindings, $filterValue);
@@ -119,7 +120,6 @@ class ReportController extends Controller
             'endDate' => $endDate,
         ]);
     }
-
 
     public function destroy($id)
     {
