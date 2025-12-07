@@ -24,6 +24,8 @@ class ResultSeeder extends Seeder
                 'student_id' => $index,
                 'subject_id' => $faker->numberBetween(1, 3),
                 'marks_obtained' => $faker->numberBetween(60, 100),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }

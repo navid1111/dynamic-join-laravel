@@ -20,6 +20,8 @@ class TeacherSeeder extends Seeder
             DB::table('teachers')->insert([
                 'name' => $faker->name,
                 'subject_id' => $index,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }

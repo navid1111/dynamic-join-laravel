@@ -19,6 +19,8 @@ class SubjectSeeder extends Seeder
         foreach (range(1, 3) as $index) {
             DB::table('subjects')->insert([
                 'name' => $faker->word,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }

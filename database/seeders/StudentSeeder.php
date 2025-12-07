@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Faker\Factory as Faker;
 
 class StudentSeeder extends Seeder
 {
@@ -20,6 +19,8 @@ class StudentSeeder extends Seeder
             DB::table('students')->insert([
                 'name' => $faker->name,
                 'age' => $faker->numberBetween(15, 25),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }

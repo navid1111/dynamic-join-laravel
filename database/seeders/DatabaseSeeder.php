@@ -8,6 +8,7 @@ use Database\Seeders\StudentSeeder;
 use Database\Seeders\TeacherSeeder; 
 use Database\Seeders\SubjectSeeder; 
 use Database\Seeders\ResultSeeder; 
+use Database\Seeders\ReportSeeder; 
 use Database\Seeders\UserSeeder; 
 
 
@@ -23,6 +24,7 @@ class DatabaseSeeder extends Seeder
             TeacherSeeder::class,
             SubjectSeeder::class,
             ResultSeeder::class,
+            ReportSeeder::class,
             UserSeeder::class,
         ]);
     }
