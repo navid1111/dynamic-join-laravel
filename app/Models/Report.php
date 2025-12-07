@@ -21,5 +21,49 @@ class Report extends Model
     {
         return $this->filters ?? [];
     }
-}
 
+    /**
+     * Filters assigned to this report (NEW SYSTEM)
+     */
+    public function filterDefinitions()
+    {
+        return $this->belongsToMany(FilterDefinition::class, 'report_filters')
+            ->withPivot('order', 'custom_label')
+            ->withTimestamps()
+            ->orderBy('report_filters.order');
+    }
+
+    /**
+     * Get active filters for this report (NEW SYSTEM)
+     */
+    public function getActiveFiltersNew()
+    {
+        return $this->filterDefinitions()->where('is_active', true)->get();
+    }
+
+    /**
+     * Get all compatible filters that can be added to this report (NEW SYSTEM)
+     */
+    public function getCompatibleFilters()
+    {
+        $reportTables = $this->getUsedTables();
+
+        return FilterDefinition::where('is_active', true)
+            ->whereIn('target_table', $reportTables)
+            ->whereNotIn('id', $this->filterDefinitions()->pluck('filter_definitions.id'))
+            ->get();
+    }
+
+    /**
+     * Extract all table names used in this report (NEW SYSTEM)
+     */
+    public function getUsedTables(): array
+    {
+        $tables = [];
+        foreach ($this->report_details['tables'] ?? [] as $tableGroup) {
+            $tables = array_merge($tables, array_keys($tableGroup));
+        }
+
+        return array_unique($tables);
+    }
+}

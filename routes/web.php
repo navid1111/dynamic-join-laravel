@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FilterManagementController;
 // use App\Http\Controllers\ProductController;
 // use App\Http\Controllers\CustomerController;
 // use App\Http\Controllers\DynamicDependentController;
@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\JoinController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ViewReportListController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,7 +53,17 @@ Route::get('/view-report/{id}/delete', [ReportController::class, 'destroy']);
 Route::get('/view-report/{id}/edit', [ReportController::class, 'edit'])->name('adminViewCreate.edit');
 Route::post('/view-report/{id}/edit', [ReportController::class, 'editForm'])->name('adminViewCreate.editForm');
 Route::post('/view-report/edit/fetch', [JoinController::class, 'fetch'])->name('adminViewCreate.fetch');
-
+Route::prefix('filters')->name('filters.')->group(function () {
+    Route::get('/', [FilterManagementController::class, 'index'])->name('index');
+    Route::get('/create', [FilterManagementController::class, 'create'])->name('create');
+    Route::post('/', [FilterManagementController::class, 'store'])->name('store');
+    Route::get('/api/table-columns', [FilterManagementController::class, 'getTableColumns'])->name('getTableColumns');
+    Route::get('/{filterDefinition}/preview', [FilterManagementController::class, 'preview'])->name('preview');
+    Route::get('/{filterDefinition}', [FilterManagementController::class, 'show'])->name('show');
+    Route::get('/{filterDefinition}/edit', [FilterManagementController::class, 'edit'])->name('edit');
+    Route::put('/{filterDefinition}', [FilterManagementController::class, 'update'])->name('update');
+    Route::delete('/{filterDefinition}', [FilterManagementController::class, 'destroy'])->name('destroy');
+    Route::get('/{filterDefinition}/assign', [FilterManagementController::class, 'assignToReports'])->name('assignToReports');
+    Route::post('/{filterDefinition}/assign', [FilterManagementController::class, 'updateAssignments'])->name('updateAssignments');
+});
 Route::get('/view-report-list', [ViewReportListController::class, 'index']);
-
-

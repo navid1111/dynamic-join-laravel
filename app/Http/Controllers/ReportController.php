@@ -27,6 +27,7 @@ class ReportController extends Controller
             return redirect('/view-report-list')->with('error', 'Report not found!');
         }
 
+        // Set default dates if not provided
         if ($startDate === null && $endDate === null) {
             $endDate = date('Y-m-d');
             $startDate = date('Y-m-d', strtotime('-6 months'));
@@ -34,29 +35,76 @@ class ReportController extends Controller
 
         $data = $report->report_details;
         $name = $report->name;
-        $filters = $report->getFilterDefinitions();
+        
+        // Get old inline filters (if any)
+        $oldFilters = $report->getFilterDefinitions();
+        
+        // Get new FilterDefinition filters assigned to this report
+        $newFilters = $report->filterDefinitions()->get();
 
         $result = $this->reportQueryBuilder->build($data).' ';
+        
+        // Add date range filter only if dateTable exists
         if (isset($data['dateTable'])) {
             $result .= 'where date('.$data['dateTable'].".created_at) between '".$startDate."' and '".$endDate."'";
-        } else {
+        } elseif (!empty($data['tables'])) {
             $result .= 'where date('.key($data['tables'][0]).".created_at) between '".$startDate."' and '".$endDate."'";
         }
 
-        // Apply custom filters if provided
+        // Apply old inline filters if provided
         $filterValues = request()->query();
         $bindings = [];
-        if (!empty($filters) && !empty($filterValues)) {
+        if (!empty($oldFilters) && !empty($filterValues)) {
             // Transform number_range single values to min/max format
-            foreach ($filters as $filter) {
+            foreach ($oldFilters as $filter) {
                 if ($filter['type'] === 'number_range' && isset($filterValues[$filter['id']]) && !is_array($filterValues[$filter['id']])) {
                     $filterValues[$filter['id']] = ['min' => $filterValues[$filter['id']], 'max' => null];
                 }
             }
 
-            $filterResult = $this->reportFilterService->applyFilters($result, $filters, $filterValues);
+            $filterResult = $this->reportFilterService->applyFilters($result, $oldFilters, $filterValues);
             $result = $filterResult['sql'];
             $bindings = $filterResult['bindings'];
+        }
+
+        // Apply new FilterDefinition filters
+        if (!empty($newFilters)) {
+            foreach ($newFilters as $filter) {
+                $filterValue = request()->query('filter_' . $filter->id);
+                
+                if (empty($filterValue)) {
+                    continue;
+                }
+
+                // Determine the column to filter on
+                $filterColumn = $filter->target_table . '.' . $filter->target_column;
+
+                // Add filter condition based on filter type
+                if ($filter->type === 'dropdown' || $filter->type === 'text') {
+                    // Single value filter
+                    if (is_array($filterValue)) {
+                        $filterValue = $filterValue[0];
+                    }
+                    $result .= " AND {$filterColumn} = ?";
+                    $bindings[] = $filterValue;
+                } elseif ($filter->type === 'number') {
+                    $result .= " AND {$filterColumn} = ?";
+                    $bindings[] = $filterValue;
+                } elseif ($filter->type === 'date') {
+                    $result .= " AND DATE({$filterColumn}) = ?";
+                    $bindings[] = $filterValue;
+                } elseif ($filter->type === 'checkbox' || $filter->type === 'multi_select') {
+                    // Multiple value filter
+                    if (!is_array($filterValue)) {
+                        $filterValue = [$filterValue];
+                    }
+                    if (!empty($filterValue)) {
+                        $placeholders = implode(',', array_fill(0, count($filterValue), '?'));
+                        $result .= " AND {$filterColumn} IN ({$placeholders})";
+                        $bindings = array_merge($bindings, $filterValue);
+                    }
+                }
+            }
         }
 
         $result = DB::select($result, $bindings);
@@ -64,8 +112,11 @@ class ReportController extends Controller
         return view('viewReport.index', [
             'data' => $result,
             'name' => $name,
-            'filters' => $filters,
+            'oldFilters' => $oldFilters,
+            'newFilters' => $newFilters,
             'reportId' => $id,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
         ]);
     }
 
