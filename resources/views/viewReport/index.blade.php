@@ -49,135 +49,10 @@
             </h1>
 
             <!-- Date Filter Form (Optional) -->
-            <form id="dateForm" class="mt-4">
-                <div class="form-row align-items-end">
-                    <div class="form-group col-md-5 col-sm-6">
-                        <label for="startDate">Start Date:</label>
-                        <input type="date" class="form-control" id="startDate" name="startDate" value="{{ $startDate }}">
-                    </div>
-                    <div class="form-group col-md-5 col-sm-6">
-                        <label for="endDate">End Date:</label>
-                        <input type="date" class="form-control" id="endDate" name="endDate" value="{{ $endDate }}">
-                    </div>
-                    <div class="form-group col-md-2 col-sm-12">
-                        <a id="changeDateBtn" class="btn btn-primary w-100 mt-md-0 mt-4"
-                            onclick="showAllData()">View</a>
-                    </div>
-                </div>
-            </form>
+            <!-- REMOVED - Using only Dynamic Filters -->
 
             <!-- Old Inline Filters -->
-            @if (!empty($oldFilters))
-                <div class="bg-white p-4 rounded-md mt-4 border border-gray-300">
-                    <h5>Inline Filters</h5>
-                    <form id="filterForm" method="GET">
-                        <div class="form-row">
-                            @foreach ($oldFilters as $filter)
-                                @if ($filter['type'] === 'dropdown')
-                                    <div class="form-group col-md-4 col-sm-6">
-                                        <label for="filter_{{ $filter['id'] }}">{{ $filter['label'] }}</label>
-                                        <select class="form-control" id="filter_{{ $filter['id'] }}" name="{{ $filter['id'] }}">
-                                            <option value="">-- Select --</option>
-                                            @if ($filter['options_source'] === 'static')
-                                                @foreach ($filter['options'] as $option)
-                                                    <option value="{{ $option }}"
-                                                        @if (request()->query($filter['id']) === $option) selected @endif>
-                                                        {{ $option }}
-                                                    </option>
-                                                @endforeach
-                                            @elseif ($filter['options_source'] === 'query')
-                                                @php
-                                                    $options = \Illuminate\Support\Facades\DB::select($filter['options_query']);
-                                                @endphp
-                                                @foreach ($options as $option)
-                                                    @php
-                                                        $optionValue = $option->name ?? current((array) $option);
-                                                    @endphp
-                                                    <option value="{{ $optionValue }}"
-                                                        @if (request()->query($filter['id']) === $optionValue) selected @endif>
-                                                        {{ $optionValue }}
-                                                    </option>
-                                                @endforeach
-                                            @endif
-                                        </select>
-                                    </div>
-                                @elseif ($filter['type'] === 'number_range')
-                                    <div class="form-group col-md-4 col-sm-6">
-                                        <label for="filter_range_{{ $filter['id'] }}">{{ $filter['label'] }}</label>
-                                        <input type="number" class="form-control" id="filter_range_{{ $filter['id'] }}"
-                                            name="{{ $filter['id'] }}" placeholder="Enter value"
-                                            value="{{ request()->query($filter['id']) }}">
-                                    </div>
-                                @elseif ($filter['type'] === 'date_range')
-                                    <div class="form-group col-md-4 col-sm-6">
-                                        <label for="filter_date_{{ $filter['id'] }}">{{ $filter['label'] }}</label>
-                                        <input type="date" class="form-control" id="filter_date_{{ $filter['id'] }}"
-                                            name="{{ $filter['id'] }}" value="{{ request()->query($filter['id']) }}">
-                                    </div>
-                                @elseif ($filter['type'] === 'text')
-                                    <div class="form-group col-md-4 col-sm-6">
-                                        <label for="filter_text_{{ $filter['id'] }}">{{ $filter['label'] }}</label>
-                                        <input type="text" class="form-control" id="filter_text_{{ $filter['id'] }}"
-                                            name="{{ $filter['id'] }}" placeholder="Search..."
-                                            value="{{ request()->query($filter['id']) }}">
-                                    </div>
-                                @elseif ($filter['type'] === 'checkbox')
-                                    <div class="form-group col-md-12">
-                                        <label>{{ $filter['label'] }}</label>
-                                        <div class="border p-3 rounded" style="max-height: 150px; overflow-y: auto;">
-                                            @if ($filter['options_source'] === 'static')
-                                                @foreach ($filter['options'] as $option)
-                                                    @php
-                                                        $selectedValues = request()->query($filter['id'], []);
-                                                        $isChecked = is_array($selectedValues) && in_array($option, $selectedValues);
-                                                    @endphp
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox"
-                                                            id="filter_check_{{ $filter['id'] }}_{{ $loop->index }}"
-                                                            name="{{ $filter['id'] }}[]" value="{{ $option }}"
-                                                            @if ($isChecked) checked @endif>
-                                                        <label class="form-check-label"
-                                                            for="filter_check_{{ $filter['id'] }}_{{ $loop->index }}">
-                                                            {{ $option }}
-                                                        </label>
-                                                    </div>
-                                                @endforeach
-                                            @elseif ($filter['options_source'] === 'query')
-                                                @php
-                                                    $checkboxOptions = \Illuminate\Support\Facades\DB::select($filter['options_query']);
-                                                    $selectedValues = request()->query($filter['id'], []);
-                                                @endphp
-                                                @foreach ($checkboxOptions as $option)
-                                                    @php
-                                                        $optionValue = $option->name ?? current((array) $option);
-                                                        $isChecked = is_array($selectedValues) && in_array($optionValue, $selectedValues);
-                                                    @endphp
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox"
-                                                            id="filter_check_{{ $filter['id'] }}_{{ $loop->index }}"
-                                                            name="{{ $filter['id'] }}[]" value="{{ $optionValue }}"
-                                                            @if ($isChecked) checked @endif>
-                                                        <label class="form-check-label"
-                                                            for="filter_check_{{ $filter['id'] }}_{{ $loop->index }}">
-                                                            {{ $optionValue }}
-                                                        </label>
-                                                    </div>
-                                                @endforeach
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            @endforeach
-                            <div class="form-group col-md-12 mt-4">
-                                <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-success">Apply Filters</button>
-                                    <button type="button" class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            @endif
+            <!-- REMOVED - Using only Dynamic Filters -->
 
             <!-- New FilterDefinition Filters -->
             @if (!empty($newFilters) && count($newFilters) > 0)
@@ -194,10 +69,10 @@
                                         <select class="form-control" id="filter_{{ $filter->id }}" name="filter_{{ $filter->id }}">
                                             <option value="">-- Select --</option>
                                             @if ($filter->options_source === 'static' && !empty($filter->options))
-                                                @foreach ($filter->options as $option)
-                                                    <option value="{{ $option }}"
-                                                        @if (request()->query('filter_' . $filter->id) === $option) selected @endif>
-                                                        {{ $option }}
+                                                @foreach ($filter->options as $key => $value)
+                                                    <option value="{{ $key }}"
+                                                        @if (request()->query('filter_' . $filter->id) === $key) selected @endif>
+                                                        {{ $value }}
                                                     </option>
                                                 @endforeach
                                             @elseif ($filter->options_source === 'dynamic')
@@ -240,24 +115,122 @@
                                         <input type="date" class="form-control" id="filter_{{ $filter->id }}"
                                             name="filter_{{ $filter->id }}" value="{{ request()->query('filter_' . $filter->id) }}">
                                     </div>
-                                @elseif ($filter->type === 'checkbox')
+                                @elseif ($filter->type === 'number_range')
+                                    <div class="form-group col-md-4 col-sm-6">
+                                        <label>{{ $filter->label }}</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <input type="number" class="form-control" id="filter_{{ $filter->id }}_min"
+                                                    name="filter_{{ $filter->id }}_min" placeholder="Min"
+                                                    value="{{ request()->query('filter_' . $filter->id . '_min') }}">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" class="form-control" id="filter_{{ $filter->id }}_max"
+                                                    name="filter_{{ $filter->id }}_max" placeholder="Max"
+                                                    value="{{ request()->query('filter_' . $filter->id . '_max') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif ($filter->type === 'date_range')
+                                    <div class="form-group col-md-4 col-sm-6">
+                                        <label>{{ $filter->label }}</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <input type="date" class="form-control" id="filter_{{ $filter->id }}_min"
+                                                    name="filter_{{ $filter->id }}_min"
+                                                    value="{{ request()->query('filter_' . $filter->id . '_min') }}">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="date" class="form-control" id="filter_{{ $filter->id }}_max"
+                                                    name="filter_{{ $filter->id }}_max"
+                                                    value="{{ request()->query('filter_' . $filter->id . '_max') }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif ($filter->type === 'autocomplete')
+                                    <div class="form-group col-md-4 col-sm-6">
+                                        <label for="filter_{{ $filter->id }}">{{ $filter->label }}</label>
+                                        <input type="text" class="form-control" id="filter_{{ $filter->id }}"
+                                            name="filter_{{ $filter->id }}" placeholder="{{ $filter->placeholder ?? 'Search...' }}"
+                                            value="{{ request()->query('filter_' . $filter->id) }}" list="autocomplete_{{ $filter->id }}">
+                                        @if ($filter->options_source === 'dynamic')
+                                            @php
+                                                try {
+                                                    $autocompleteOptions = \Illuminate\Support\Facades\DB::select($filter->options_query);
+                                                } catch (\Exception $e) {
+                                                    $autocompleteOptions = [];
+                                                }
+                                            @endphp
+                                            <datalist id="autocomplete_{{ $filter->id }}">
+                                                @foreach ($autocompleteOptions as $option)
+                                                    @php
+                                                        $optionValue = $option->{$filter->options_column} ?? current((array) $option);
+                                                    @endphp
+                                                    <option value="{{ $optionValue }}">
+                                                @endforeach
+                                            </datalist>
+                                        @endif
+                                    </div>
+                                @elseif ($filter->type === 'radio')
+                                    <div class="form-group col-md-6 col-sm-12">
+                                        <label>{{ $filter->label }}</label>
+                                        <div class="border p-2 rounded">
+                                            @if ($filter->options_source === 'static' && !empty($filter->options))
+                                                @foreach ($filter->options as $key => $value)
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio"
+                                                            id="filter_radio_{{ $filter->id }}_{{ $loop->index }}"
+                                                            name="filter_{{ $filter->id }}" value="{{ $key }}"
+                                                            @if (request()->query('filter_' . $filter->id) === $key) checked @endif>
+                                                        <label class="form-check-label"
+                                                            for="filter_radio_{{ $filter->id }}_{{ $loop->index }}">
+                                                            {{ $value }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                            @elseif ($filter->options_source === 'dynamic')
+                                                @php
+                                                    try {
+                                                        $radioOptions = \Illuminate\Support\Facades\DB::select($filter->options_query);
+                                                    } catch (\Exception $e) {
+                                                        $radioOptions = [];
+                                                    }
+                                                @endphp
+                                                @foreach ($radioOptions as $option)
+                                                    @php
+                                                        $optionValue = $option->{$filter->options_column} ?? current((array) $option);
+                                                    @endphp
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio"
+                                                            id="filter_radio_{{ $filter->id }}_{{ $loop->index }}"
+                                                            name="filter_{{ $filter->id }}" value="{{ $optionValue }}"
+                                                            @if (request()->query('filter_' . $filter->id) === $optionValue) checked @endif>
+                                                        <label class="form-check-label"
+                                                            for="filter_radio_{{ $filter->id }}_{{ $loop->index }}">
+                                                            {{ $optionValue }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
                                     <div class="form-group col-md-12">
                                         <label>{{ $filter->label }}</label>
                                         <div class="border p-3 rounded" style="max-height: 150px; overflow-y: auto;">
                                             @if ($filter->options_source === 'static' && !empty($filter->options))
-                                                @foreach ($filter->options as $option)
+                                                @foreach ($filter->options as $key => $value)
                                                     @php
                                                         $selectedValues = request()->query('filter_' . $filter->id, []);
-                                                        $isChecked = is_array($selectedValues) && in_array($option, $selectedValues);
+                                                        $isChecked = is_array($selectedValues) && in_array($key, $selectedValues);
                                                     @endphp
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox"
                                                             id="filter_check_{{ $filter->id }}_{{ $loop->index }}"
-                                                            name="filter_{{ $filter->id }}[]" value="{{ $option }}"
+                                                            name="filter_{{ $filter->id }}[]" value="{{ $key }}"
                                                             @if ($isChecked) checked @endif>
                                                         <label class="form-check-label"
                                                             for="filter_check_{{ $filter->id }}_{{ $loop->index }}">
-                                                            {{ $option }}
+                                                            {{ $value }}
                                                         </label>
                                                     </div>
                                                 @endforeach
@@ -294,13 +267,13 @@
                                         <label for="filter_{{ $filter->id }}">{{ $filter->label }}</label>
                                         <select class="form-control" id="filter_{{ $filter->id }}" name="filter_{{ $filter->id }}[]" multiple>
                                             @if ($filter->options_source === 'static' && !empty($filter->options))
-                                                @foreach ($filter->options as $option)
+                                                @foreach ($filter->options as $key => $value)
                                                     @php
                                                         $selectedValues = request()->query('filter_' . $filter->id, []);
-                                                        $isSelected = is_array($selectedValues) && in_array($option, $selectedValues);
+                                                        $isSelected = is_array($selectedValues) && in_array($key, $selectedValues);
                                                     @endphp
-                                                    <option value="{{ $option }}" @if ($isSelected) selected @endif>
-                                                        {{ $option }}
+                                                    <option value="{{ $key }}" @if ($isSelected) selected @endif>
+                                                        {{ $value }}
                                                     </option>
                                                 @endforeach
                                             @elseif ($filter->options_source === 'dynamic')
@@ -378,19 +351,23 @@
             window.location.href = baseUrl;
         }
 
-        // Clear dynamic filters only
+        // Clear dynamic filters only (removes all filter_* parameters)
         function clearDynamicFilters() {
-            // Get the current URL without query parameters that start with "filter_"
             const url = new URL(window.location);
             const params = new URLSearchParams(url.search);
             
-            // Remove all filter_* parameters
+            // Collect keys to delete (avoid modifying while iterating)
+            const keysToDelete = [];
             for (const [key] of params) {
                 if (key.startsWith('filter_')) {
-                    params.delete(key);
+                    keysToDelete.push(key);
                 }
             }
             
+            // Delete all collected filter keys
+            keysToDelete.forEach(key => params.delete(key));
+            
+            // Reconstruct URL
             url.search = params.toString();
             window.location.href = url.toString();
         }

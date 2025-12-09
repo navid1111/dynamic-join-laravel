@@ -55,7 +55,8 @@
                     <option value="">-- Select Type --</option>
                     @foreach($filterTypes as $key => $value)
                         <option value="{{ $key }}" {{ old('type', $filterDefinition->type) === $key ? 'selected' : '' }}>
-                            {{ $value }}</option>
+                            {{ $value }}
+                        </option>
                     @endforeach
                 </select>
                 @error('type')
@@ -122,7 +123,8 @@
                                     <option value="">-- Select Table --</option>
                                     @foreach($tables as $table)
                                         <option value="{{ $table }}" {{ old('options_table') === $table ? 'selected' : '' }}>
-                                            {{ $table }}</option>
+                                            {{ $table }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -139,12 +141,40 @@
                     </div>
 
                     <div id="staticOptionsField" style="display: none;">
-                        <label for="options" class="block text-gray-700 font-bold mb-2">Manual Options (one per
-                            line)</label>
-                        <textarea id="options" name="options"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono text-sm"
-                            rows="4"
-                            placeholder="Option 1&#10;Option 2&#10;Option 3">{{ old('options', is_string($filterDefinition->options) ? $filterDefinition->options : json_encode($filterDefinition->options)) }}</textarea>
+                        <label for="options" class="block text-gray-700 font-bold mb-2">Static Options (Key: Value
+                            pairs)</label>
+                        <div class="bg-white p-4 border border-gray-300 rounded">
+                            <div id="optionsList" class="space-y-3">
+                                @if($filterDefinition->options_source === 'static' && is_array($filterDefinition->options))
+                                    @foreach($filterDefinition->options as $key => $value)
+                                        <div class="option-row flex gap-2">
+                                            <input type="text" name="option_keys[]" placeholder="Key (e.g., 40002)"
+                                                class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                                                value="{{ $key }}">
+                                            <input type="text" name="option_values[]" placeholder="Value (e.g., embdad)"
+                                                class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                                                value="{{ $value }}">
+                                            <button type="button" onclick="removeOption(this)"
+                                                class="bg-red-500 hover:bg-red-700 text-white px-3 py-2 rounded">Remove</button>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="option-row flex gap-2">
+                                        <input type="text" name="option_keys[]" placeholder="Key (e.g., 40002)"
+                                            class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                                        <input type="text" name="option_values[]" placeholder="Value (e.g., embdad)"
+                                            class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                                        <button type="button" onclick="removeOption(this)"
+                                            class="bg-red-500 hover:bg-red-700 text-white px-3 py-2 rounded">Remove</button>
+                                    </div>
+                                @endif
+                            </div>
+                            <button type="button" onclick="addOption()"
+                                class="mt-3 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                + Add Option
+                            </button>
+                            <p class="text-gray-500 text-sm mt-2">Add key-value pairs for your filter options</p>
+                        </div>
                         @error('options')
                             <span class="text-red-600 text-sm">{{ $message }}</span>
                         @enderror
@@ -255,6 +285,25 @@
             const source = document.getElementById('options_source').value;
             document.getElementById('dynamicOptionsField').style.display = source === 'dynamic' ? 'block' : 'none';
             document.getElementById('staticOptionsField').style.display = source === 'static' ? 'block' : 'none';
+        }
+
+        function addOption() {
+            const optionsList = document.getElementById('optionsList');
+            const newRow = document.createElement('div');
+            newRow.className = 'option-row flex gap-2';
+            newRow.innerHTML = `
+                <input type="text" name="option_keys[]" placeholder="Key (e.g., 40002)"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                <input type="text" name="option_values[]" placeholder="Value (e.g., embdad)"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                <button type="button" onclick="removeOption(this)"
+                    class="bg-red-500 hover:bg-red-700 text-white px-3 py-2 rounded">Remove</button>
+            `;
+            optionsList.appendChild(newRow);
+        }
+
+        function removeOption(button) {
+            button.parentElement.remove();
         }
 
         // Initialize on page load

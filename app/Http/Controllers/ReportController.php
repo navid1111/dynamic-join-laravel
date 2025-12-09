@@ -28,12 +28,6 @@ class ReportController extends Controller
             return redirect('/view-report-list')->with('error', 'Report not found!');
         }
 
-        // Set default dates if not provided
-        if ($startDate === null && $endDate === null) {
-            $endDate = date('Y-m-d');
-            $startDate = date('Y-m-d', strtotime('-6 months'));
-        }
-
         $data = $report->report_details;
         $name = $report->name;
 
@@ -45,12 +39,7 @@ class ReportController extends Controller
 
         $result = $this->reportQueryBuilder->build($data).' ';
 
-        // Add date range filter only if dateTable exists
-        if (isset($data['dateTable'])) {
-            $result .= 'where date('.$data['dateTable'].".created_at) between '".$startDate."' and '".$endDate."'";
-        } elseif (! empty($data['tables'])) {
-            $result .= 'where date('.key($data['tables'][0]).".created_at) between '".$startDate."' and '".$endDate."'";
-        }
+        // No automatic date range filter - use only dynamic filters
 
         // Apply old inline filters if provided
         $filterValues = request()->query();
@@ -71,38 +60,71 @@ class ReportController extends Controller
         // Apply new FilterDefinition filters
         if (! empty($newFilters)) {
             foreach ($newFilters as $filter) {
-                $filterValue = request()->query('filter_'.$filter->id);
-
-                if (empty($filterValue)) {
-                    continue;
-                }
-
                 // Determine the column to filter on
                 $filterColumn = $filter->target_table.'.'.$filter->target_column;
 
                 // Add filter condition based on filter type
-                if ($filter->type === 'dropdown' || $filter->type === 'text') {
-                    // Single value filter
-                    if (is_array($filterValue)) {
-                        $filterValue = $filterValue[0];
+                if ($filter->type === 'number_range') {
+                    // Range filter with min and max
+                    $minValue = request()->query('filter_'.$filter->id.'_min');
+                    $maxValue = request()->query('filter_'.$filter->id.'_max');
+
+                    if (! empty($minValue)) {
+                        $result .= " AND {$filterColumn} >= ?";
+                        $bindings[] = $minValue;
                     }
-                    $result .= " AND {$filterColumn} = ?";
-                    $bindings[] = $filterValue;
-                } elseif ($filter->type === 'number') {
-                    $result .= " AND {$filterColumn} = ?";
-                    $bindings[] = $filterValue;
-                } elseif ($filter->type === 'date') {
-                    $result .= " AND DATE({$filterColumn}) = ?";
-                    $bindings[] = $filterValue;
-                } elseif ($filter->type === 'checkbox' || $filter->type === 'multi_select') {
-                    // Multiple value filter
-                    if (! is_array($filterValue)) {
-                        $filterValue = [$filterValue];
+                    if (! empty($maxValue)) {
+                        $result .= " AND {$filterColumn} <= ?";
+                        $bindings[] = $maxValue;
                     }
-                    if (! empty($filterValue)) {
-                        $placeholders = implode(',', array_fill(0, count($filterValue), '?'));
-                        $result .= " AND {$filterColumn} IN ({$placeholders})";
-                        $bindings = array_merge($bindings, $filterValue);
+                } elseif ($filter->type === 'date_range') {
+                    // Date range filter
+                    $minDate = request()->query('filter_'.$filter->id.'_min');
+                    $maxDate = request()->query('filter_'.$filter->id.'_max');
+
+                    if (! empty($minDate)) {
+                        $result .= " AND DATE({$filterColumn}) >= ?";
+                        $bindings[] = $minDate;
+                    }
+                    if (! empty($maxDate)) {
+                        $result .= " AND DATE({$filterColumn}) <= ?";
+                        $bindings[] = $maxDate;
+                    }
+                } else {
+                    $filterValue = request()->query('filter_'.$filter->id);
+
+                    if (empty($filterValue)) {
+                        continue;
+                    }
+
+                    // Add filter condition based on filter type
+                    if ($filter->type === 'dropdown' || $filter->type === 'text') {
+                        // Single value filter
+                        if (is_array($filterValue)) {
+                            $filterValue = $filterValue[0];
+                        }
+                        $result .= " AND {$filterColumn} = ?";
+                        $bindings[] = $filterValue;
+                    } elseif ($filter->type === 'number') {
+                        $result .= " AND {$filterColumn} = ?";
+                        $bindings[] = $filterValue;
+                    } elseif ($filter->type === 'date') {
+                        $result .= " AND DATE({$filterColumn}) = ?";
+                        $bindings[] = $filterValue;
+                    } elseif ($filter->type === 'checkbox' || $filter->type === 'multi_select' || $filter->type === 'radio') {
+                        // Multiple value filter
+                        if (! is_array($filterValue)) {
+                            $filterValue = [$filterValue];
+                        }
+                        if (! empty($filterValue)) {
+                            $placeholders = implode(',', array_fill(0, count($filterValue), '?'));
+                            $result .= " AND {$filterColumn} IN ({$placeholders})";
+                            $bindings = array_merge($bindings, $filterValue);
+                        }
+                    } elseif ($filter->type === 'autocomplete') {
+                        // Autocomplete as single value
+                        $result .= " AND {$filterColumn} = ?";
+                        $bindings[] = $filterValue;
                     }
                 }
             }
@@ -116,8 +138,6 @@ class ReportController extends Controller
             'oldFilters' => $oldFilters,
             'newFilters' => $newFilters,
             'reportId' => $id,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
         ]);
     }
 
