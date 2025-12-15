@@ -111,7 +111,8 @@
                             <option value="">-- Select Display Type --</option>
                             @foreach($conditionalTypes as $key => $value)
                                 <option value="{{ $key }}" {{ old('conditional_type') === $key ? 'selected' : '' }}>
-                                    {{ $value }}</option>
+                                    {{ $value }}
+                                </option>
                             @endforeach
                         </select>
                         @error('conditional_type')

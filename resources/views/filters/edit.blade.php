@@ -66,50 +66,55 @@
 
             <div class="mb-4 flex items-center">
                 <input type="hidden" name="is_conditional" value="0">
-                <input type="checkbox" id="is_conditional" name="is_conditional" value="1" class="mr-2" {{ old('is_conditional', $filterDefinition->is_conditional) ? 'checked' : '' }} onchange="toggleConditionalFields()">
+                <input type="checkbox" id="is_conditional" name="is_conditional" value="1" class="mr-2" {{ old('is_conditional', $filterDefinition->is_conditional) ? 'checked' : '' }}
+                    onchange="toggleConditionalFields()">
                 <label for="is_conditional" class="text-gray-700 font-bold">Conditional Filter</label>
-                <span class="ml-2 text-gray-500 text-sm">(Allow users to switch between different table/column targets)</span>
+                <span class="ml-2 text-gray-500 text-sm">(Allow users to switch between different table/column
+                    targets)</span>
             </div>
 
             <!-- Regular Target Fields -->
-            <div id="regularTargetFields" style="{{ old('is_conditional', $filterDefinition->is_conditional) ? 'display: none;' : '' }}">
+            <div id="regularTargetFields"
+                style="{{ old('is_conditional', $filterDefinition->is_conditional) ? 'display: none;' : '' }}">
                 <div class="mb-4">
                     <label for="target_table" class="block text-gray-700 font-bold mb-2">Target Table *</label>
                     <select id="target_table" name="target_table"
                         class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                         onchange="loadTableColumns()">
-                    <option value="">-- Select Table --</option>
-                    @foreach($tables as $table)
-                        <option value="{{ $table }}" {{ old('target_table', $filterDefinition->target_table) === $table ? 'selected' : '' }}>{{ $table }}</option>
-                    @endforeach
-                </select>
-                @error('target_table')
-                    <span class="text-red-600 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div class="mb-4">
-                <label for="target_column" class="block text-gray-700 font-bold mb-2">Target Column *</label>
-                <select id="target_column" name="target_column"
-                    class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
-                    <option value="">-- Select Column --</option>
-                    @if(isset($targetColumns))
-                        @foreach($targetColumns as $col)
-                            <option value="{{ $col }}" {{ old('target_column', $filterDefinition->target_column) === $col ? 'selected' : '' }}>{{ $col }}</option>
+                        <option value="">-- Select Table --</option>
+                        @foreach($tables as $table)
+                            <option value="{{ $table }}" {{ old('target_table', $filterDefinition->target_table) === $table ? 'selected' : '' }}>{{ $table }}</option>
                         @endforeach
-                    @endif
-                </select>
-                @error('target_column')
-                    <span class="text-red-600 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+                    </select>
+                    @error('target_table')
+                        <span class="text-red-600 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <div class="mb-4">
+                    <label for="target_column" class="block text-gray-700 font-bold mb-2">Target Column *</label>
+                    <select id="target_column" name="target_column"
+                        class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                        <option value="">-- Select Column --</option>
+                        @if(isset($targetColumns))
+                            @foreach($targetColumns as $col)
+                                <option value="{{ $col }}" {{ old('target_column', $filterDefinition->target_column) === $col ? 'selected' : '' }}>{{ $col }}</option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('target_column')
+                        <span class="text-red-600 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
             </div>
 
             <!-- Conditional Target Fields -->
-            <div id="conditionalFields" style="{{ old('is_conditional', $filterDefinition->is_conditional) ? '' : 'display: none;' }}" class="mb-4">
+            <div id="conditionalFields"
+                style="{{ old('is_conditional', $filterDefinition->is_conditional) ? '' : 'display: none;' }}"
+                class="mb-4">
                 <div class="p-4 bg-purple-50 border border-purple-200 rounded">
                     <h3 class="font-bold text-gray-800 mb-3">Conditional Targets Configuration</h3>
-                    
+
                     <div class="mb-4">
                         <label for="conditional_type" class="block text-gray-700 font-bold mb-2">Display Type *</label>
                         <select id="conditional_type" name="conditional_type"
@@ -136,16 +141,14 @@
                                         <div class="grid grid-cols-2 gap-3 mb-2">
                                             <div>
                                                 <label class="block text-gray-600 text-sm mb-1">Key (ID) *</label>
-                                                <input type="text" name="conditional_targets[{{ $index }}][key]" 
-                                                    value="{{ $target['key'] ?? '' }}"
-                                                    placeholder="e.g., booking_date"
+                                                <input type="text" name="conditional_targets[{{ $index }}][key]"
+                                                    value="{{ $target['key'] ?? '' }}" placeholder="e.g., booking_date"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
                                             </div>
                                             <div>
                                                 <label class="block text-gray-600 text-sm mb-1">Label (Display) *</label>
-                                                <input type="text" name="conditional_targets[{{ $index }}][label]" 
-                                                    value="{{ $target['label'] ?? '' }}"
-                                                    placeholder="e.g., Booking Date"
+                                                <input type="text" name="conditional_targets[{{ $index }}][label]"
+                                                    value="{{ $target['label'] ?? '' }}" placeholder="e.g., Booking Date"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500">
                                             </div>
                                         </div>
@@ -154,7 +157,8 @@
                                                 <label class="block text-gray-600 text-sm mb-1">Table *</label>
                                                 <select name="conditional_targets[{{ $index }}][table]"
                                                     class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 conditional-target-table"
-                                                    data-row="{{ $index }}" onchange="loadConditionalColumns(this, {{ $index }})">
+                                                    data-row="{{ $index }}"
+                                                    onchange="loadConditionalColumns(this, {{ $index }})">
                                                     <option value="">-- Select Table --</option>
                                                     @foreach($tables as $table)
                                                         <option value="{{ $table }}" {{ ($target['table'] ?? '') === $table ? 'selected' : '' }}>{{ $table }}</option>
@@ -167,7 +171,8 @@
                                                     class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 conditional-target-column-{{ $index }}">
                                                     <option value="">-- Select Column --</option>
                                                     @if(isset($target['column']))
-                                                        <option value="{{ $target['column'] }}" selected>{{ $target['column'] }}</option>
+                                                        <option value="{{ $target['column'] }}" selected>{{ $target['column'] }}
+                                                        </option>
                                                     @endif
                                                 </select>
                                             </div>
@@ -355,7 +360,7 @@
             const regularFields = document.getElementById('regularTargetFields');
             const targetTable = document.getElementById('target_table');
             const targetColumn = document.getElementById('target_column');
-            
+
             if (isConditional) {
                 conditionalFields.style.display = 'block';
                 regularFields.style.display = 'none';
@@ -390,8 +395,8 @@
                             data-row="${conditionalTargetIndex}" onchange="loadConditionalColumns(this, ${conditionalTargetIndex})">
                             <option value="">-- Select Table --</option>
                             ${Array.from(document.getElementById('target_table').options)
-                                .map(opt => opt.value ? `<option value="${opt.value}">${opt.value}</option>` : '')
-                                .join('')}
+                    .map(opt => opt.value ? `<option value="${opt.value}">${opt.value}</option>` : '')
+                    .join('')}
                         </select>
                     </div>
                     <div>
@@ -538,7 +543,7 @@
 
         function handleFormSubmit(event) {
             const isConditional = document.getElementById('is_conditional').checked;
-            
+
             if (isConditional) {
                 // Clear regular target fields to prevent sending string "null"
                 document.getElementById('target_table').value = '';
@@ -547,13 +552,13 @@
                 // Clear conditional fields
                 const conditionalTargetInputs = document.querySelectorAll('input[name^="conditional_targets"], select[name^="conditional_targets"]');
                 conditionalTargetInputs.forEach(input => input.remove());
-                
+
                 const conditionalType = document.getElementById('conditional_type');
                 if (conditionalType) {
                     conditionalType.value = '';
                 }
             }
-            
+
             return true;
         }
     </script>
