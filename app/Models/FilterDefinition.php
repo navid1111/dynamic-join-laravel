@@ -17,6 +17,9 @@ class FilterDefinition extends Model
         'type',
         'target_table',
         'target_column',
+        'is_conditional',
+        'conditional_targets',
+        'conditional_type',
         'options_source',
         'options',
         'options_query',
@@ -28,12 +31,15 @@ class FilterDefinition extends Model
 
     protected $casts = [
         'options' => 'array',
+        'conditional_targets' => 'array',
         'required' => 'boolean',
         'is_active' => 'boolean',
+        'is_conditional' => 'boolean',
+        'conditional_type' => 'array',
     ];
 
     /**
-     * Return options as key-value pairs 
+     * Return options as key-value pairs
      * Return ['key' => 'value'] for static options
      */
     public function getOptionsArray(): array
@@ -41,16 +47,18 @@ class FilterDefinition extends Model
         if ($this->options_source === 'static' && is_array($this->options)) {
             return $this->options;
         }
+
         return [];
     }
 
-        /**
+    /**
      * Get option keys only (for filtering)
      */
     public function getOptionKeys(): array
     {
         return array_keys($this->getOptionsArray());
     }
+
     /**
      * Reports using this filter
      */
@@ -69,6 +77,15 @@ class FilterDefinition extends Model
     {
         $reportTables = $this->extractTablesFromReport($report);
 
+        if($this->is_conditional){
+            foreach($this->getConditionalTargets() as $target){
+                if(in_array($target['table'], $reportTables)){
+                    return true;
+                }
+            }
+            return false;
+        }
+
         return in_array($this->target_table, $reportTables);
     }
 
@@ -83,5 +100,14 @@ class FilterDefinition extends Model
         }
 
         return array_unique($tables);
+    }
+
+    public function getConditionalTargets(): array
+    {
+        if(!$this->is_conditional || empty($this->conditional_targets)){
+            return [];
+        }
+
+        return $this->conditional_targets;
     }
 }

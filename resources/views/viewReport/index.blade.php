@@ -63,7 +63,103 @@
                     <form id="dynamicFilterForm" method="GET">
                         <div class="form-row">
                             @foreach ($newFilters as $filter)
-                                @if ($filter->type === 'dropdown')
+                                @if ($filter->is_conditional && !empty($filter->conditional_targets))
+                                    {{-- Conditional Filter --}}
+                                    <div class="form-group col-md-8 col-sm-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <label class="font-weight-bold mb-3">{{ $filter->label }}</label>
+                                                
+                                                {{-- Conditional Target Selector --}}
+                                                @if ($filter->conditional_type === 'button_group')
+                                                    <div class="mb-3">
+                                                        <small class="text-muted d-block mb-2">Select what to filter:</small>
+                                                        <div class="btn-group btn-group-toggle" role="group">
+                                                            @foreach ($filter->conditional_targets as $index => $target)
+                                                                @php
+                                                                    $isSelected = request()->query('filter_' . $filter->id . '_target') === $target['key'] || 
+                                                                                  (!request()->query('filter_' . $filter->id . '_target') && $index === 0);
+                                                                @endphp
+                                                                <input type="radio" class="btn-check" name="filter_{{ $filter->id }}_target" 
+                                                                    id="filter_{{ $filter->id }}_target_{{ $target['key'] }}" 
+                                                                    value="{{ $target['key'] }}" 
+                                                                    {{ $isSelected ? 'checked' : '' }}
+                                                                    autocomplete="off">
+                                                                <label class="btn btn-sm btn-outline-primary" for="filter_{{ $filter->id }}_target_{{ $target['key'] }}">
+                                                                    {{ $target['label'] }}
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                    </div>
+                                                @elseif ($filter->conditional_type === 'tabs')
+                                                    <div class="mb-3">
+                                                        <small class="text-muted d-block mb-2">Select what to filter:</small>
+                                                        <ul class="nav nav-pills" role="tablist">
+                                                            @foreach ($filter->conditional_targets as $index => $target)
+                                                                <li class="nav-item">
+                                                                    <a class="nav-link {{ ($index === 0 && !request()->query('filter_' . $filter->id . '_target')) || (request()->query('filter_' . $filter->id . '_target') === $target['key']) ? 'active' : '' }}" 
+                                                                        href="#" onclick="selectConditionalTarget(event, {{ $filter->id }}, '{{ $target['key'] }}')">
+                                                                        {{ $target['label'] }}
+                                                                    </a>
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                        <input type="hidden" name="filter_{{ $filter->id }}_target" id="filter_{{ $filter->id }}_target" 
+                                                            value="{{ request()->query('filter_' . $filter->id . '_target') ?? $filter->conditional_targets[0]['key'] }}">
+                                                    </div>
+                                                @elseif ($filter->conditional_type === 'dropdown')
+                                                    <div class="mb-3">
+                                                        <label for="filter_{{ $filter->id }}_target" class="small text-muted">Select what to filter:</label>
+                                                        <select class="form-control" name="filter_{{ $filter->id }}_target" id="filter_{{ $filter->id }}_target">
+                                                            @foreach ($filter->conditional_targets as $index => $target)
+                                                                <option value="{{ $target['key'] }}" {{ (($index === 0 && !request()->query('filter_' . $filter->id . '_target')) || (request()->query('filter_' . $filter->id . '_target') === $target['key'])) ? 'selected' : '' }}>
+                                                                    {{ $target['label'] }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                @endif
+                                                
+                                                {{-- Filter Value Input Based on Type --}}
+                                                <div>
+                                                    <small class="text-muted d-block mb-2">Enter filter value:</small>
+                                                    @if ($filter->type === 'date_range')
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <input type="date" class="form-control" name="filter_{{ $filter->id }}_min" placeholder="Start Date"
+                                                                    value="{{ request()->query('filter_' . $filter->id . '_min') }}">
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <input type="date" class="form-control" name="filter_{{ $filter->id }}_max" placeholder="End Date"
+                                                                    value="{{ request()->query('filter_' . $filter->id . '_max') }}">
+                                                            </div>
+                                                        </div>
+                                                    @elseif ($filter->type === 'date')
+                                                        <input type="date" class="form-control" name="filter_{{ $filter->id }}"
+                                                            value="{{ request()->query('filter_' . $filter->id) }}">
+                                                    @elseif ($filter->type === 'number_range')
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <input type="number" class="form-control" name="filter_{{ $filter->id }}_min" placeholder="Min"
+                                                                    value="{{ request()->query('filter_' . $filter->id . '_min') }}">
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <input type="number" class="form-control" name="filter_{{ $filter->id }}_max" placeholder="Max"
+                                                                    value="{{ request()->query('filter_' . $filter->id . '_max') }}">
+                                                            </div>
+                                                        </div>
+                                                    @elseif ($filter->type === 'text')
+                                                        <input type="text" class="form-control" name="filter_{{ $filter->id }}" placeholder="{{ $filter->placeholder ?? 'Search...' }}"
+                                                            value="{{ request()->query('filter_' . $filter->id) }}">
+                                                    @elseif ($filter->type === 'number')
+                                                        <input type="number" class="form-control" name="filter_{{ $filter->id }}" placeholder="{{ $filter->placeholder ?? 'Enter number' }}"
+                                                            value="{{ request()->query('filter_' . $filter->id) }}">
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif ($filter->type === 'dropdown')
                                     <div class="form-group col-lg-3 col-md-4 col-sm-6">
                                         <label for="filter_{{ $filter->id }}">{{ $filter->label }}</label>
                                         <select class="form-control" id="filter_{{ $filter->id }}" name="filter_{{ $filter->id }}">
@@ -370,6 +466,19 @@
             // Reconstruct URL
             url.search = params.toString();
             window.location.href = url.toString();
+        }
+
+        // Select conditional target for tab-based filters
+        function selectConditionalTarget(event, filterId, targetKey) {
+            event.preventDefault();
+            
+            // Update hidden input
+            document.getElementById('filter_' + filterId + '_target').value = targetKey;
+            
+            // Update active tab
+            const tabs = event.target.closest('.nav-pills').querySelectorAll('.nav-link');
+            tabs.forEach(link => link.classList.remove('active'));
+            event.target.classList.add('active');
         }
     </script>
 </body>

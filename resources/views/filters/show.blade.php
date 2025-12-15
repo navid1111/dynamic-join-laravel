@@ -59,14 +59,39 @@
                             </span>
                         </dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-600 font-semibold">Target Table</dt>
-                        <dd class="text-gray-800">{{ $filterDefinition->target_table }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-600 font-semibold">Target Column</dt>
-                        <dd class="text-gray-800">{{ $filterDefinition->target_column }}</dd>
-                    </div>
+                    @if($filterDefinition->is_conditional && !empty($filterDefinition->conditional_targets))
+                        <div>
+                            <dt class="text-gray-600 font-semibold">Conditional Type</dt>
+                            <dd>
+                                <span
+                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    {{ ucfirst(str_replace('_', ' ', $filterDefinition->conditional_type)) }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-600 font-semibold text-sm">Conditional Targets</dt>
+                            <dd class="text-gray-800">
+                                <ul class="list-disc list-inside mt-2 space-y-1">
+                                    @foreach($filterDefinition->conditional_targets as $target)
+                                        <li class="text-sm">
+                                            <strong>{{ $target['label'] }}</strong>:
+                                            {{ $target['table'] }}.{{ $target['column'] }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </dd>
+                        </div>
+                    @else
+                        <div>
+                            <dt class="text-gray-600 font-semibold">Target Table</dt>
+                            <dd class="text-gray-800">{{ $filterDefinition->target_table }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-600 font-semibold">Target Column</dt>
+                            <dd class="text-gray-800">{{ $filterDefinition->target_column }}</dd>
+                        </div>
+                    @endif
                     <div>
                         <dt class="text-gray-600 font-semibold">Status</dt>
                         <dd>

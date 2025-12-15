@@ -60,7 +60,67 @@ class ReportController extends Controller
         // Apply new FilterDefinition filters
         if (! empty($newFilters)) {
             foreach ($newFilters as $filter) {
-                // Determine the column to filter on
+                // Handle conditional filters
+                if ($filter->is_conditional) {
+                    $selectedTarget = request()->query('filter_'.$filter->id.'_target');
+
+                    if (empty($selectedTarget)) {
+                        continue;
+                    }
+
+                    // Find the target configuration
+                    $targetConfig = collect($filter->conditional_targets)
+                        ->firstWhere('key', $selectedTarget);
+
+                    if (! $targetConfig) {
+                        continue;
+                    }
+
+                    $filterColumn = $targetConfig['table'].'.'.$targetConfig['column'];
+
+                    // Apply filter based on base type
+                    if ($filter->type === 'date_range') {
+                        $minDate = request()->query('filter_'.$filter->id.'_min');
+                        $maxDate = request()->query('filter_'.$filter->id.'_max');
+
+                        if (! empty($minDate)) {
+                            $result .= " AND DATE({$filterColumn}) >= ?";
+                            $bindings[] = $minDate;
+                        }
+                        if (! empty($maxDate)) {
+                            $result .= " AND DATE({$filterColumn}) <= ?";
+                            $bindings[] = $maxDate;
+                        }
+                    } elseif ($filter->type === 'date') {
+                        $filterValue = request()->query('filter_'.$filter->id);
+                        if (! empty($filterValue)) {
+                            $result .= " AND DATE({$filterColumn}) = ?";
+                            $bindings[] = $filterValue;
+                        }
+                    } elseif ($filter->type === 'number_range') {
+                        $minValue = request()->query('filter_'.$filter->id.'_min');
+                        $maxValue = request()->query('filter_'.$filter->id.'_max');
+
+                        if (! empty($minValue)) {
+                            $result .= " AND {$filterColumn} >= ?";
+                            $bindings[] = $minValue;
+                        }
+                        if (! empty($maxValue)) {
+                            $result .= " AND {$filterColumn} <= ?";
+                            $bindings[] = $maxValue;
+                        }
+                    } else {
+                        $filterValue = request()->query('filter_'.$filter->id);
+                        if (! empty($filterValue)) {
+                            $result .= " AND {$filterColumn} = ?";
+                            $bindings[] = $filterValue;
+                        }
+                    }
+
+                    continue;
+                }
+
+                // Regular filter logic
                 $filterColumn = $filter->target_table.'.'.$filter->target_column;
 
                 // Add filter condition based on filter type

@@ -39,14 +39,37 @@
                             </span>
                         </dd>
                     </div>
-                    <div>
-                        <dt class="text-gray-600 font-semibold text-sm">Target Table</dt>
-                        <dd class="text-gray-800">{{ $filterDefinition->target_table }}</dd>
-                    </div>
-                    <div>
-                        <dt class="text-gray-600 font-semibold text-sm">Target Column</dt>
-                        <dd class="text-gray-800">{{ $filterDefinition->target_column }}</dd>
-                    </div>
+                    @if($filterDefinition->is_conditional && !empty($filterDefinition->conditional_targets))
+                        <div>
+                            <dt class="text-gray-600 font-semibold text-sm">Conditional Type</dt>
+                            <dd>
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    {{ ucfirst(str_replace('_', ' ', $filterDefinition->conditional_type)) }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-600 font-semibold text-sm">Conditional Targets</dt>
+                            <dd class="text-gray-800">
+                                <ul class="list-disc list-inside mt-2 space-y-1 text-xs">
+                                    @foreach($filterDefinition->conditional_targets as $target)
+                                        <li>
+                                            <strong>{{ $target['label'] }}</strong>: {{ $target['table'] }}.{{ $target['column'] }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </dd>
+                        </div>
+                    @else
+                        <div>
+                            <dt class="text-gray-600 font-semibold text-sm">Target Table</dt>
+                            <dd class="text-gray-800">{{ $filterDefinition->target_table }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-600 font-semibold text-sm">Target Column</dt>
+                            <dd class="text-gray-800">{{ $filterDefinition->target_column }}</dd>
+                        </div>
+                    @endif
                     @if ($filterDefinition->options_source !== 'none')
                         <div>
                             <dt class="text-gray-600 font-semibold text-sm">Options Source</dt>
@@ -65,8 +88,64 @@
                 <h2 class="text-lg font-bold text-gray-800 mb-4">How it will look in Reports</h2>
 
                 <div class="border border-gray-300 rounded p-4 bg-gray-50">
-                    <!-- Render based on filter type -->
-                    @if ($filterDefinition->type === 'text')
+                    <!-- Render conditional filter UI -->
+                    @if ($filterDefinition->is_conditional && !empty($filterDefinition->conditional_targets))
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-3">
+                                {{ $filterDefinition->label }}
+                                @if ($filterDefinition->required) <span class="text-red-600">*</span> @endif
+                            </label>
+                            
+                            <!-- Show conditional UI based on type -->
+                            @if($filterDefinition->conditional_type === 'button_group')
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    @foreach($filterDefinition->conditional_targets as $target)
+                                        <button type="button" class="px-4 py-2 border-2 border-blue-500 text-blue-500 rounded hover:bg-blue-500 hover:text-white disabled:opacity-50" disabled>
+                                            {{ $target['label'] }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @elseif($filterDefinition->conditional_type === 'tabs')
+                                <div class="border-b border-gray-300 mb-3">
+                                    <div class="flex gap-1">
+                                        @foreach($filterDefinition->conditional_targets as $index => $target)
+                                            <button type="button" class="px-4 py-2 {{ $index === 0 ? 'border-b-2 border-blue-500 text-blue-600' : 'border-b-2 border-transparent text-gray-600' }} hover:border-blue-500 disabled:opacity-50" disabled>
+                                                {{ $target['label'] }}
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @elseif($filterDefinition->conditional_type === 'dropdown')
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 mb-3" disabled>
+                                    <option value="">-- Select Target --</option>
+                                    @foreach($filterDefinition->conditional_targets as $target)
+                                        <option value="{{ $target['key'] }}">{{ $target['label'] }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+
+                            <!-- Show the actual filter input based on type -->
+                            @if($filterDefinition->type === 'date_range')
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                                    <input type="date" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                                </div>
+                            @elseif($filterDefinition->type === 'date')
+                                <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                            @elseif($filterDefinition->type === 'number_range')
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" placeholder="From" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                                    <input type="number" placeholder="To" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                                </div>
+                            @elseif($filterDefinition->type === 'text')
+                                <input type="text" placeholder="{{ $filterDefinition->placeholder }}" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                            @elseif($filterDefinition->type === 'number')
+                                <input type="number" placeholder="{{ $filterDefinition->placeholder }}" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500" disabled>
+                            @endif
+                            
+                            <p class="text-gray-500 text-xs mt-2">Users will select a target option, then enter the filter value</p>
+                        </div>
+                    @elseif ($filterDefinition->type === 'text')
                         <div>
                             <label class="block text-gray-700 font-semibold mb-2">
                                 {{ $filterDefinition->label }}

@@ -23,6 +23,28 @@ class FilterManagementController extends Controller
     /**
      * Show the form for creating a new filter definition.
      */
+    // public function create()
+    // {
+    //     $tables = $this->getAvailableTables();
+    //     $filterTypes = [
+    //         'dropdown' => 'Dropdown',
+    //         'checkbox' => 'Checkbox',
+    //         'radio' => 'Radio Button',
+    //         'text' => 'Text Input',
+    //         'number' => 'Number',
+    //         'number_range' => 'Number Range',
+    //         'date' => 'Date',
+    //         'date_range' => 'Date Range',
+    //         'multi_select' => 'Multi-Select Dropdown',
+    //         'autocomplete' => 'Autocomplete',
+    //     ];
+
+    //     // Types that require options
+    //     $typesWithOptions = ['dropdown', 'checkbox', 'radio', 'multi_select'];
+
+    //     return view('filters.create', compact('tables', 'filterTypes', 'typesWithOptions'));
+    // }
+
     public function create()
     {
         $tables = $this->getAvailableTables();
@@ -39,28 +61,103 @@ class FilterManagementController extends Controller
             'autocomplete' => 'Autocomplete',
         ];
 
-        // Types that require options
+        $conditionalTypes = [
+            'button_group' => 'Button Group',
+            'tabs' => 'Tabs',
+            'dropdown' => 'Dropdown Selector',
+        ];
+
         $typesWithOptions = ['dropdown', 'checkbox', 'radio', 'multi_select'];
 
-        return view('filters.create', compact('tables', 'filterTypes', 'typesWithOptions'));
+        return view('filters.create', compact('tables', 'filterTypes', 'conditionalTypes', 'typesWithOptions'));
     }
 
     /**
      * Store a newly created filter definition in storage.
      */
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|unique:filter_definitions|max:100',
+    //         'label' => 'required|string|max:100',
+    //         'type' => 'required|in:dropdown,checkbox,radio,text,number,number_range,date,date_range,multi_select,autocomplete',
+    //         'target_table' => 'required|string|max:100',
+    //         'target_column' => 'required|string|max:100',
+    //         'options_source' => 'nullable|in:static,dynamic',
+    //         'option_keys' => 'nullable|array',        // NEW
+    //         'option_keys.*' => 'nullable|string',     // NEW
+    //         'option_values' => 'nullable|array',      // NEW
+    //         'option_values.*' => 'nullable|string',   // NEW
+    //         'options_table' => 'nullable|string|max:100',
+    //         'options_column' => 'nullable|string|max:100',
+    //         'required' => 'boolean',
+    //         'placeholder' => 'nullable|string|max:100',
+    //         'description' => 'nullable|string',
+    //         'is_active' => 'boolean',
+    //     ]);
+
+    //     $typesWithOptions = ['dropdown', 'checkbox', 'radio', 'multi_select'];
+
+    //     if (in_array($validated['type'], $typesWithOptions)) {
+    //         $validated['options_source'] = $request->input('options_source', 'dynamic');
+
+    //         if ($validated['options_source'] === 'static') {
+    //             // Build key-value object from separate arrays
+    //             $keys = $request->input('option_keys', []);
+    //             $values = $request->input('option_values', []);
+
+    //             $options = [];
+    //             foreach ($keys as $index => $key) {
+    //                 if (! empty($key) && ! empty($values[$index])) {
+    //                     $options[$key] = $values[$index];
+    //                 }
+    //             }
+
+    //             $validated['options'] = $options; // Store as {"key": "value"}
+    //             $validated['options_query'] = null;
+
+    //         } elseif ($validated['options_source'] === 'dynamic') {
+    //             $validated['options'] = null;
+    //             $validated['options_query'] = "SELECT DISTINCT {$validated['options_column']} as id, {$validated['options_column']} as name FROM {$validated['options_table']} ORDER BY {$validated['options_column']}";
+    //         }
+
+    //         $validated['options_table'] = $request->input('options_table');
+    //         $validated['options_column'] = $request->input('options_column');
+    //     } else {
+    //         $validated['options_source'] = 'none';
+    //         $validated['options'] = null;
+    //         $validated['options_query'] = null;
+    //     }
+
+    //     // Remove helper fields before creating
+    //     unset($validated['option_keys']);
+    //     unset($validated['option_values']);
+
+    //     FilterDefinition::create($validated);
+
+    //     return redirect()->route('filters.index')
+    //         ->with('success', 'Filter created successfully.');
+    // }
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:filter_definitions|max:100',
             'label' => 'required|string|max:100',
             'type' => 'required|in:dropdown,checkbox,radio,text,number,number_range,date,date_range,multi_select,autocomplete',
-            'target_table' => 'required|string|max:100',
-            'target_column' => 'required|string|max:100',
+            'is_conditional' => 'boolean',
+            'conditional_type' => 'nullable|in:button_group,tabs,dropdown',
+            'conditional_targets' => 'nullable|array',
+            'conditional_targets.*.key' => 'required_with:conditional_targets|string',
+            'conditional_targets.*.label' => 'required_with:conditional_targets|string',
+            'conditional_targets.*.table' => 'required_with:conditional_targets|string',
+            'conditional_targets.*.column' => 'required_with:conditional_targets|string',
+            'target_table' => 'nullable|required_unless:is_conditional,1|string|max:100',
+            'target_column' => 'nullable|required_unless:is_conditional,1|string|max:100',
             'options_source' => 'nullable|in:static,dynamic',
-            'option_keys' => 'nullable|array',        // NEW
-            'option_keys.*' => 'nullable|string',     // NEW
-            'option_values' => 'nullable|array',      // NEW
-            'option_values.*' => 'nullable|string',   // NEW
+            'option_keys' => 'nullable|array',
+            'option_keys.*' => 'nullable|string',
+            'option_values' => 'nullable|array',
+            'option_values.*' => 'nullable|string',
             'options_table' => 'nullable|string|max:100',
             'options_column' => 'nullable|string|max:100',
             'required' => 'boolean',
@@ -69,13 +166,21 @@ class FilterManagementController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        // Handle conditional filter
+        if ($validated['is_conditional'] ?? false) {
+            $validated['target_table'] = null;
+            $validated['target_column'] = null;
+        } else {
+            $validated['conditional_targets'] = null;
+            $validated['conditional_type'] = null;
+        }
+
         $typesWithOptions = ['dropdown', 'checkbox', 'radio', 'multi_select'];
 
         if (in_array($validated['type'], $typesWithOptions)) {
             $validated['options_source'] = $request->input('options_source', 'dynamic');
 
             if ($validated['options_source'] === 'static') {
-                // Build key-value object from separate arrays
                 $keys = $request->input('option_keys', []);
                 $values = $request->input('option_values', []);
 
@@ -86,9 +191,8 @@ class FilterManagementController extends Controller
                     }
                 }
 
-                $validated['options'] = $options; // Store as {"key": "value"}
+                $validated['options'] = $options;
                 $validated['options_query'] = null;
-
             } elseif ($validated['options_source'] === 'dynamic') {
                 $validated['options'] = null;
                 $validated['options_query'] = "SELECT DISTINCT {$validated['options_column']} as id, {$validated['options_column']} as name FROM {$validated['options_table']} ORDER BY {$validated['options_column']}";
@@ -102,7 +206,6 @@ class FilterManagementController extends Controller
             $validated['options_query'] = null;
         }
 
-        // Remove helper fields before creating
         unset($validated['option_keys']);
         unset($validated['option_values']);
 
@@ -156,8 +259,15 @@ class FilterManagementController extends Controller
             'name' => 'required|string|unique:filter_definitions,name,'.$filterDefinition->id.'|max:100',
             'label' => 'required|string|max:100',
             'type' => 'required|in:dropdown,checkbox,radio,text,number,number_range,date,date_range,multi_select,autocomplete',
-            'target_table' => 'required|string|max:100',
-            'target_column' => 'required|string|max:100',
+            'is_conditional' => 'boolean',
+            'conditional_type' => 'nullable|in:button_group,tabs,dropdown',
+            'conditional_targets' => 'nullable|array',
+            'conditional_targets.*.key' => 'required_with:conditional_targets|string',
+            'conditional_targets.*.label' => 'required_with:conditional_targets|string',
+            'conditional_targets.*.table' => 'required_with:conditional_targets|string',
+            'conditional_targets.*.column' => 'required_with:conditional_targets|string',
+            'target_table' => 'nullable|required_unless:is_conditional,1|string|max:100',
+            'target_column' => 'nullable|required_unless:is_conditional,1|string|max:100',
             'options_source' => 'nullable|in:static,dynamic',
             'options_table' => 'nullable|string|max:100',
             'options_column' => 'nullable|string|max:100',
@@ -166,6 +276,15 @@ class FilterManagementController extends Controller
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
+
+        // Handle conditional filter
+        if ($validated['is_conditional'] ?? false) {
+            $validated['target_table'] = null;
+            $validated['target_column'] = null;
+        } else {
+            $validated['conditional_targets'] = null;
+            $validated['conditional_type'] = null;
+        }
 
         // Determine if this type needs options
         $typesWithOptions = ['dropdown', 'checkbox', 'radio', 'multi_select'];
@@ -181,7 +300,7 @@ class FilterManagementController extends Controller
                 $options = [];
 
                 foreach ($keys as $index => $key) {
-                    if (!empty($key) && isset($values[$index])) {
+                    if (! empty($key) && isset($values[$index])) {
                         $options[$key] = $values[$index];
                     }
                 }
