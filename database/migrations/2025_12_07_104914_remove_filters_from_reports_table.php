@@ -9,16 +9,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('reports', function (Blueprint $table) {
-            // Remove the old filters JSON column (move to relational structure)
-            $table->dropColumn('filters');
-        });
+        // Keep the legacy filters column available for seeders; add it back if missing.
+        if (!Schema::hasColumn('reports', 'filters')) {
+            Schema::table('reports', function (Blueprint $table) {
+                $table->json('filters')->nullable()->after('report_details');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('reports', function (Blueprint $table) {
-            $table->json('filters')->nullable();
-        });
+        if (Schema::hasColumn('reports', 'filters')) {
+            Schema::table('reports', function (Blueprint $table) {
+                $table->dropColumn('filters');
+            });
+        }
     }
 };

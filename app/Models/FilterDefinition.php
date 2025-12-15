@@ -33,6 +33,25 @@ class FilterDefinition extends Model
     ];
 
     /**
+     * Return options as key-value pairs 
+     * Return ['key' => 'value'] for static options
+     */
+    public function getOptionsArray(): array
+    {
+        if ($this->options_source === 'static' && is_array($this->options)) {
+            return $this->options;
+        }
+        return [];
+    }
+
+        /**
+     * Get option keys only (for filtering)
+     */
+    public function getOptionKeys(): array
+    {
+        return array_keys($this->getOptionsArray());
+    }
+    /**
      * Reports using this filter
      */
     public function reports()
