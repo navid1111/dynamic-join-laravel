@@ -430,11 +430,34 @@
                     @endif
                 </tbody>
             </table>
-            <div class="text-left"><a href="" id="downloadButton" class="btn btn-primary mb-3"
-                    onclick="downloadTableAsExcel('{{ $name }}')">Download</a>
+            <div class="text-left">
+                <a href="" id="downloadButton" class="btn btn-primary mb-3" onclick="downloadTableAsExcel('{{ $name }}')">Download</a>
+                <a href="{{ route('reports.transformations.configure', $reportId) }}" class="btn btn-info mb-3 ml-2">Configure Transformations</a>
             </div>
-        </div>
-    </div>
+
+            <!-- Transformation Debug Info -->
+            <div class="card mb-4 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Transformation Status</h5>
+                </div>
+                <div class="card-body">
+                    @if(isset($transformations) && count($transformations) > 0)
+                        <p class="text-success fw-bold">Active Transformations: {{ count($transformations) }} columns configured.</p>
+                        <ul class="list-group">
+                            @foreach($transformations as $col => $conf)
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Column: <strong>{{ $col }}</strong>
+                                    <span class="badge badge-primary badge-pill">{{ count($conf['transformers'] ?? []) }} steps</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-muted mb-0">No transformations configured for this report.</p>
+                    @endif
+                </div>
+            </div>
+
+            <table class="table text-center" id="content-table">
     <script>
         let table = new DataTable('.table', {
             responsive: true

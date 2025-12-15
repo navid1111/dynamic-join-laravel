@@ -6,6 +6,7 @@ use App\Models\Report;
 use App\Models\User;
 use App\Services\ReportFilterService;
 use App\Services\ReportQueryBuilder;
+use App\Services\ColumnTransformationService;
 use DB;
 use Illuminate\Http\Request;
 
@@ -14,11 +15,16 @@ class ReportController extends Controller
     private ReportQueryBuilder $reportQueryBuilder;
 
     private ReportFilterService $reportFilterService;
+    private ColumnTransformationService $transformationService;
 
-    public function __construct(ReportQueryBuilder $reportQueryBuilder, ReportFilterService $reportFilterService)
-    {
+    public function __construct(
+        ReportQueryBuilder $reportQueryBuilder, 
+        ReportFilterService $reportFilterService,
+        ColumnTransformationService $transformationService
+    ) {
         $this->reportQueryBuilder = $reportQueryBuilder;
         $this->reportFilterService = $reportFilterService;
+        $this->transformationService = $transformationService;
     }
 
     public function showData($id, $startDate = null, $endDate = null)
@@ -190,14 +196,24 @@ class ReportController extends Controller
             }
         }
 
-        $result = DB::select($result, $bindings);
+        // Execute query to get RAW data (filters applied, transformations NOT yet applied)
+        $rawData = DB::select($result, $bindings);
+        
+        // Apply column transformations for DISPLAY ONLY
+        $transformations = $report->getColumnTransformations();
+        $displayData = $this->transformationService->applyTransformations(
+            $rawData,
+            $transformations
+        );
 
         return view('viewReport.index', [
-            'data' => $result,
+            'data' => $displayData, // Transformed data for display
+            'rawData' => $rawData,   // Original data (for exports if needed)
             'name' => $name,
             'oldFilters' => $oldFilters,
             'newFilters' => $newFilters,
             'reportId' => $id,
+            'transformations' => $transformations,
         ]);
     }
 

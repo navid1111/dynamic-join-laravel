@@ -67,3 +67,17 @@ Route::prefix('filters')->name('filters.')->group(function () {
     Route::post('/{filterDefinition}/assign', [FilterManagementController::class, 'updateAssignments'])->name('updateAssignments');
 });
 Route::get('/view-report-list', [ViewReportListController::class, 'index']);
+
+use App\Http\Controllers\ReportTransformationController;
+
+Route::middleware(['web'])->group(function () {
+    // Transformation routes
+    Route::get('/reports/{report}/transformations', [ReportTransformationController::class, 'configure'])
+        ->name('reports.transformations.configure');
+    Route::post('/reports/{report}/transformations', [ReportTransformationController::class, 'store'])
+        ->name('reports.transformations.store');
+    Route::post('/reports/transformations/preview', [ReportTransformationController::class, 'preview'])
+        ->name('reports.transformations.preview');
+    Route::get('/reports/transformations/config', [ReportTransformationController::class, 'getTransformerConfig'])
+        ->name('reports.transformations.config');
+});

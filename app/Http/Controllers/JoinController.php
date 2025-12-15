@@ -5,16 +5,42 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Report;
 use App\Models\User;
+use App\Services\Transformers\TransformerFactory;
 use DB;
 
 class JoinController extends Controller
 {
+    private TransformerFactory $transformerFactory;
+
+    public function __construct(TransformerFactory $transformerFactory)
+    {
+        $this->transformerFactory = $transformerFactory;
+    }
+
     public function index()
     {
         $tableNames = DB::select('SHOW TABLES');
         $tableNames = array_map('current', $tableNames);
         $userNames = User::pluck('name')->all();
-        return view('adminViewCreate.index', ['tableNames' => $tableNames, 'users' => $userNames]);
+        $rawTransformers = $this->transformerFactory->getTransformersByCategory();
+        
+        // Serialize transformers for frontend
+        $transformers = [];
+        foreach ($rawTransformers as $category => $items) {
+            $transformers[$category] = [];
+            foreach ($items as $name => $transformer) {
+                $transformers[$category][$name] = [
+                    'name' => $transformer->getName(),
+                    'description' => $transformer->getDescription()
+                ];
+            }
+        }
+
+        return view('adminViewCreate.index', [
+            'tableNames' => $tableNames, 
+            'users' => $userNames,
+            'transformers' => $transformers
+        ]);
     }
 
     public function fetch(Request $request)
@@ -91,13 +117,26 @@ class JoinController extends Controller
             $users = [];
         }
         $name = $request['name'];
-        $data = $request->except(['_token', 'table', 'users', 'name']);
+        $transformations = $request['transformations'] ?? [];
+        
+        $data = $request->except(['_token', 'table', 'users', 'name', 'transformations']);
         if (!isset($data['joins'])) {
             $data['joins'] = [];
         }
         // dd($data);
 
-        Report::create(['report_details' => $data, 'name' => $name, 'users' => $users]);
+        // Restructure transformations to match anticipated format if needed, 
+        // but if the form sends them as transformations[table.column][transformers]... it should be fine.
+        // We just need to make sure we save it.
+        
+        // Report::create(['report_details' => $data, 'name' => $name, 'users' => $users]);
+        // Update to include column_transformations
+         Report::create([
+            'report_details' => $data, 
+            'name' => $name, 
+            'users' => $users,
+            'column_transformations' => $transformations
+        ]);
         echo "<pre>";
 
         return redirect('/view-report-list');

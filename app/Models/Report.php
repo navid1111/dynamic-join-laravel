@@ -9,10 +9,11 @@ class Report extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'report_details', 'filters', 'users'];
+    protected $fillable = ['name', 'report_details', 'filters', 'users', 'column_transformations'];
 
     protected $casts = [
         'report_details' => 'array',
+        'column_transformations' => 'array',
         'filters' => 'array',
         'users' => 'array',
     ];
@@ -65,5 +66,42 @@ class Report extends Model
         }
 
         return array_unique($tables);
+    }
+    /**
+     * Get column transformations configuration
+     */
+    public function getColumnTransformations(): array
+    {
+        return $this->column_transformations ?? [];
+    }
+    
+    /**
+     * Check if a column has transformations
+     */
+    public function hasTransformation(string $columnKey): bool
+    {
+        $transformations = $this->getColumnTransformations();
+        return isset($transformations[$columnKey]);
+    }
+    
+    /**
+     * Get all columns used in this report
+     */
+    public function getAllColumns(): array
+    {
+        $columns = [];
+        foreach ($this->report_details['tables'] ?? [] as $tableGroup) {
+            foreach ($tableGroup as $table => $cols) {
+                foreach ($cols as $col) {
+                    $columns[] = [
+                        'table' => $table,
+                        'column' => $col,
+                        'key' => "{$table}.{$col}",
+                        'display' => "{$table}.{$col}",
+                    ];
+                }
+            }
+        }
+        return $columns;
     }
 }
