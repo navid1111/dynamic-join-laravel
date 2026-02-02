@@ -1,0 +1,61 @@
+# Dynamic Join Laravel: Functions & Routes Reference
+
+## Main Functions (Services/Controllers)
+
+### Filter System
+- **app/Services/ReportFilterService.php**
+  - `applyFilters($query, $filters)` – Applies filters to Eloquent queries
+  - `getAvailableFilters($reportId)` – Returns filter config for a report
+- **app/Services/FilterStrategyFactory.php**
+  - `make($type)` – Returns filter strategy instance by type
+- **app/Services/ColumnTransformationService.php**
+  - `transform($row, $transformations)` – Applies column transformations
+
+### Controllers
+- **app/Http/Controllers/ReportController.php**
+  - `index()` – Lists all reports
+  - `show($id)` – Shows a report with filters and results
+  - `applyFilters(Request $request, $id)` – Applies filters to report data
+
+### Models
+- **app/Models/Report.php**
+  - `filters` (attribute) – JSON config for report filters
+
+## Main Routes (routes/web.php)
+
+- `GET  /view-reports` – List all reports
+- `GET  /view-reports/{id}` – View a report (with filters UI)
+- `GET  /api/reports/{id}/filters` – Get filter config for a report (AJAX)
+- `POST /api/reports/{id}/data` – Get filtered report data (AJAX)
+
+## Example Filter Config (in ReportSeeder)
+```php
+'filters' => json_encode([
+    [
+        'id' => 'subject_filter',
+        'label' => 'Subject Name',
+        'type' => 'dropdown',
+        'table' => 'subjects',
+        'column' => 'name',
+        'options_source' => 'query',
+        'options_query' => 'SELECT DISTINCT name FROM subjects',
+        'default' => null,
+        'required' => false,
+        'order' => 1,
+    ],
+    [
+        'id' => 'passing_marks',
+        'label' => 'Passing Marks (Greater Than)',
+        'type' => 'number_range',
+        'table' => 'results',
+        'column' => 'marks_obtained',
+        'default' => null,
+        'required' => false,
+        'order' => 2,
+    ],
+])
+```
+
+## See Also
+- FILTER_QUICK_REFERENCE.md – Filter types, usage, and UI
+- FILTER_IMPLEMENTATION_SUMMARY.md – Implementation details
