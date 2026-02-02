@@ -1,0 +1,6 @@
+projectKey=navid:dynamic-join-filter
+serverUrl=http://localhost:9000
+serverVersion=25.2.0.102705
+dashboardUrl=http://localhost:9000/dashboard?id=navid%3Adynamic-join-filter
+ceTaskId=7cd7534f-6f7f-45ef-b23e-ec71aeb97b42
+ceTaskUrl=http://localhost:9000/api/ce/task?id=7cd7534f-6f7f-45ef-b23e-ec71aeb97b42

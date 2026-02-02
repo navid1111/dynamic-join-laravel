@@ -6,6 +6,22 @@ namespace App\Services;
 
 class ConditionalFilterStrategy implements FilterStrategyInterface
 {
+    private DateRangeFilterStrategy $dateRangeStrategy;
+
+    private NumberRangeFilterStrategy $numberRangeStrategy;
+
+    private TextFilterStrategy $textStrategy;
+
+    private SimpleFilterStrategy $simpleStrategy;
+
+    public function __construct()
+    {
+        $this->dateRangeStrategy = new DateRangeFilterStrategy;
+        $this->numberRangeStrategy = new NumberRangeFilterStrategy;
+        $this->textStrategy = new TextFilterStrategy;
+        $this->simpleStrategy = new SimpleFilterStrategy;
+    }
+
     public function buildWhereClause(array $filter, $value, array &$bindings): ?string
     {
         // Value format: ['target' => 'booking_date', 'value' => '2024-01-01']
@@ -34,6 +50,9 @@ class ConditionalFilterStrategy implements FilterStrategyInterface
 
     private function buildClauseForBaseType(string $type, string $table, string $column, $value, array &$bindings): ?string
     {
+        // Create a temporary filter array for delegation
+        $tempFilter = ['table' => $table, 'column' => $column];
+
         switch ($type) {
             case 'date':
                 $bindings[] = $value;
@@ -41,54 +60,16 @@ class ConditionalFilterStrategy implements FilterStrategyInterface
                 return "DATE({$table}.{$column}) = ?";
 
             case 'date_range':
-                return $this->buildDateRangeClause($table, $column, $value, $bindings);
+                return $this->dateRangeStrategy->buildWhereClause($tempFilter, $value, $bindings);
 
             case 'number_range':
-                return $this->buildNumberRangeClause($table, $column, $value, $bindings);
+                return $this->numberRangeStrategy->buildWhereClause($tempFilter, $value, $bindings);
 
             case 'text':
-                $bindings[] = "%{$value}%";
-
-                return "{$table}.{$column} LIKE ?";
+                return $this->textStrategy->buildWhereClause($tempFilter, $value, $bindings);
 
             default:
-                $bindings[] = $value;
-
-                return "{$table}.{$column} = ?";
+                return $this->simpleStrategy->buildWhereClause($tempFilter, $value, $bindings);
         }
-    }
-
-    private function buildDateRangeClause(string $table, string $column, array $value, array &$bindings): ?string
-    {
-        $clauses = [];
-
-        if (! empty($value['min'])) {
-            $bindings[] = $value['min'];
-            $clauses[] = "DATE({$table}.{$column}) >= ?";
-        }
-
-        if (! empty($value['max'])) {
-            $bindings[] = $value['max'];
-            $clauses[] = "DATE({$table}.{$column}) <= ?";
-        }
-
-        return ! empty($clauses) ? '('.implode(' AND ', $clauses).')' : null;
-    }
-
-    private function buildNumberRangeClause(string $table, string $column, array $value, array &$bindings): ?string
-    {
-        $clauses = [];
-
-        if (isset($value['min']) && $value['min'] !== '') {
-            $bindings[] = $value['min'];
-            $clauses[] = "{$table}.{$column} >= ?";
-        }
-
-        if (isset($value['max']) && $value['max'] !== '') {
-            $bindings[] = $value['max'];
-            $clauses[] = "{$table}.{$column} <= ?";
-        }
-
-        return ! empty($clauses) ? '('.implode(' AND ', $clauses).')' : null;
     }
 }
